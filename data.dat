@@ -1,0 +1,295 @@
+{"titulo": """Soma de Primos na Matriz com Theads""",
+    "info": {
+        "materia": "Sistemas Operacionais",
+        "data": "Novembro de 2023",
+        "local": "UFGD - Universidade Federal da Grande Dourados",
+        "professor": "Marcos Paulo Mouro",
+        "nota": "10.0",
+    },
+    "descricao": """
+    O trabalho consiste em calcular números primos em uma matriz gerada aleatoriamente com sementes aleatórias. A matriz será subdividida em submatrizes menores, e as threads irão processar esses valores de forma paralela para realizar as somas.  
+    A subdivisão da matriz deve gerar o menor número possível de submatrizes. O algoritmo busca otimizar essa divisão. Na seção de dados, haverá uma análise de desempenho que demonstrará, por meio de cálculos, o tamanho ideal das submatrizes em relação ao número de threads, evidenciando a correlação entre esses fatores para obter uma boa performance.
+    """,
+    "imag": None,
+    "codigos": [
+        {"motivo": "Divão das Submatrizes",
+            "codigo": r"""
+     void sep_matriz(int l, int c, int tl, int tc)
+{
+    int l0, c0;//Valor incial onde minhas matriz estra
+    int nmc = (c - (c % tc)) / tc;//Passos na coluna da minha matriz
+    int nml = (l - (l % tl)) / tl;//Passos na linha da minha matriz
+    int rc = c % tc;//Resto que sobra quando a matriz não da colunas perfeita
+    int rl = l % tl;//Resto que sobra quando a matriz não da linhas perfeitas
+    // tudo inicia do [0,0]
+    //Setando parametros inicias
+    c0 = 0;
+    l0 = 0;
+    int count;
+    count = 0;
+    vector<int> linhas;
+    vector<int> colunas;
+    vector<submatrizes> resto;//Esse funcina especialmente para 
+    linhas.push_back(l0);
+    colunas.push_back(l0);
+
+    //Criando stacs de valores para fazer a submatriz MxN
+    while (nml > count)
+    {
+        int l1 = l0 + tl;
+        linhas.push_back(l1);
+
+        l0 = l1;
+
+        count++;
+    }
+    count = 0;
+   
+    while (nmc > count)
+    {
+        int c1 = c0 + tc;
+        colunas.push_back(c1);
+        c0 = c1;
+        count++;
+
+    }
+    // Armazenando resto
+    if (rc) {
+        colunas.push_back(colunas[colunas.size() - 1] + rc);
+        nmc++;
+    }
+    if (rl) {
+        linhas.push_back(linhas[linhas.size() - 1] + rl);
+        nml++;
+    }
+
+    //Aquile ele trabalha colunas por linhas
+    for (int kl = 1; kl < nmc + 1; kl++)
+    {
+        //Trabalho por linhas
+        for (int ll = 1; ll < nml + 1; ll++)
+        {
+            //Cria uma auxiliar 
+            matrizes aux;
+            aux.l = linhas[ll] - linhas[ll - 1];
+            aux.c = colunas[kl] - colunas[kl - 1];
+            aux.pross = 0;
+            // caso consiga fazer uma submatriz com o tamanho correto ele faz caso não ele guarda os valores para fazer uso no futuro
+            if (aux.l * aux.c == tl * tc) {
+                aux.m = AlocaSubMatriz( colunas, linhas, kl, ll);
+                vet_mat.push_back(aux);
+            }
+            else {
+                for (int k1 = 0, k = colunas[kl - 1]; k < colunas[kl]; k1++, k++){
+                    for (int j1 = 0, j = linhas[ll - 1]; j < linhas[ll]; j1++, j++){
+                        submatrizes aux2;
+                        aux2.l = j;
+                        aux2.c = k;
+                        resto.push_back(aux2);
+                    }
+                }
+            }
+            
+            
+        }
+    }
+    //Limpa as linhas e colunas que não é mais nescessário já que todos os enderaços já foram pré setados
+    linhas.clear();
+    colunas.clear();
+
+    // caso não prescise fazer mais submatrizes ele para de trabalhar
+    if (resto.size() == 0) return;
+
+    //faz o numero maximo de submatriz MxN
+    while (resto.size() >= (tc*tl)){
+        matrizes aux;
+        aux.l = tl;
+        aux.c = tc;
+        aux.pross = 0;
+        aux.m = AlocaRest(&resto,tl,tc);
+        vet_mat.push_back(aux);
+    } 
+
+    //Se restar algo ainda ele faz uma submatriz menor mxn que vai ser a unica diferente de todas as outras
+    if (resto.size())
+    {
+        int rcs;
+        rcs = 1;
+        //ele não consegue contruir um matriz com valor primo, não exite matriz de valor de numero primo apenas vetor.
+        if (chek_primo(resto.size())!=1) {
+            int i = 2;
+            //  Aqui ele procura os dois mmenores numero para 
+            //  Alcançar a solução
+            //  EX: se resta 20 valores para bor em uma sumatriz
+            //  Ele pode fazer de 2 geitos 2x10 ou 4x5 matematicamente falando
+            //  Melhor caso é o 4x5 que seria uma matriz mais redoda isso que ele faz
+            //  Se for 100 nos podemos faze 1x100, 2x50,4x25,5x20,10x10, matematicamente a melhor
+            //  Sera a 10 po 10 que somado é 20
+            //  Tinha duas maneiras de acaçar esse valor uma seria pegando todo e vendo a menor soma
+            //  101,52,29,25,20 ou você segue a ideia de Busca binaria
+            //      1. Começo minha busca de 2 a Numeroa de valores que resta
+            //      2. busco o proxo %i == 0 se econtra esse n é o novo valor de linha
+            //      3. com isso incremento i
+            //      4. busca é feita até que i < resto/i
+            // com isso acho a menor soma automaticamente
+            while (i < resto.size() / rcs) {
+                if (resto.size() % i==0)rcs = i;
+                i++;
+            }    
+        }
+        int rls = (int)(resto.size())/ rcs;
+
+        matrizes aux;
+        aux.l = rls;
+        aux.c = rcs;
+        aux.pross = 0;
+        aux.m = AlocaRest(&resto, rls, rcs);
+        vet_mat.push_back(aux);
+    }
+    resto.clear();
+}
+""",
+        "descricao": "Este trecho de código mostra uma parte importante do processo de subdivisão da matriz. Nele, os elementos são armazenados em uma nova matriz, e o resto é mantido. É importante lembrar que toda a subdivisão depende de a matriz conter números primos ou não, pois números primos acabam se transformando em um vetor.",
+        },
+            {"motivo": "Threads",
+            "codigo": r"""
+      void my_parelelar_busca_prims(void* param)
+{
+    // Reber os parametros externos
+    PARAM* paramt = (PARAM*)param;
+    //Variaveis locais das threds
+    bool sair_do_laco;//para ver se toda matriz foi percorrida
+    sair_do_laco = FALSE;
+    bool tem_id;//Para ver se tem algo para ver averiguado
+    tem_id = FALSE;
+    matrizes aux;//Para auxiliar pegar a submatriz que contem os indeces
+    int somas;//Auxiliar temporaria que pega a soma da submatriz
+    somas = 0;
+    //Verifica se há submatris suficiente para cada indice
+    if (vet_mat.size() > paramt->id)
+    {
+        aux = vet_mat[paramt->id];
+        vet_mat[paramt->id].pross = 1;
+        tem_id = TRUE;
+    }
+
+    while (TRUE)
+    {   
+        //Checa se ele conseguiu pegar algo logo de inicio
+        if (tem_id) {
+            somas = funcao_somatoria_primos_paralelo(aux.c, aux.l,aux.m);// Faz a soma uma a um e já coloca no epaço da soma
+            paramt->count += 1;//Conta o numero de matrizes analisadas
+        }
+        
+        //Faz uma seção critica para soma
+        WaitForSingleObject(SecCrtSoma, INFINITE);//Sessão para espera dos outros processo
+        sum += somas;
+        ReleaseMutex(SecCrtSoma);
+        //Faz uma sessão crítcia para tirar valores da sub matriz
+        WaitForSingleObject(SecCrtRetirada, INFINITE);//Sessão para espera dos outros processo
+        if (num_threads > vet_mat.size()) sair_do_laco = TRUE;
+        
+        //Comça no numero de treads
+        for (int i = num_threads; i < vet_mat.size(); i++)
+        {
+            if (vet_mat[i].pross == 0)//Checa se já não foi consumida
+            {
+                vet_mat[i].pross = 1;
+                aux = vet_mat[i];
+                break;
+            }
+            //Confirma que já foi tudo averiguado e sai da matriz
+            if ((i + 1) == vet_mat.size()) {
+                sair_do_laco = TRUE;
+                break;
+            }
+        }
+        ReleaseMutex(SecCrtRetirada);
+        // Caso todos os valores da sub matriz tenha sido checado e todos apresentão como processado sai da sub matriz
+        if (sair_do_laco) break;
+    }
+
+    // Termina Thread
+    _endthread();
+}
+
+int processar_em_paralelo()
+{   
+    vector<HANDLE> hThread;// Armazenas as therds
+    vector<PARAM> vParam;// Armazena os parametros de cada thread
+    PARAM addve;// auxiliar para receber e enxer os parametros
+
+    //Sessão critica de soma
+    SecCrtSoma = CreateMutex(NULL, FALSE, NULL);
+    // sessão critoca de checar e pegar as submtrizes
+    SecCrtRetirada = CreateMutex(NULL, FALSE, NULL);
+
+    // Encher os parametros com o indice da thread e tbem para contar quantas threads ele pegou
+    for (int i = 0; i < num_threads; i++)
+    {
+        addve.id = i;
+        addve.count = 0;
+        vParam.push_back(addve);
+    }
+
+    //Criar as threads todas suspensas
+    for (int i = 0; i < num_threads; i++)
+        hThread.push_back(CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&my_parelelar_busca_prims, &vParam[i], CREATE_SUSPENDED, NULL));
+    
+    int init, find;// variaveis de conta clock
+    
+    //Informa o inicio do processo
+    cout << "Começou os processos" << endl;
+
+    //incia a contagem de tempo
+    init = clock();
+
+    // Incia as theads
+    for (int i = 0; i < num_threads; i++) {
+        ResumeThread(hThread[i]);
+    }
+
+    // Espera todos os objetos terminar
+    WaitForMultipleObjects(num_threads, hThread.data(), TRUE, INFINITE);
+
+    //Fecha as treads
+    for (int i = 0; i < num_threads; i++) {
+        CloseHandle(hThread[i]);
+    }
+
+    //Para de contar o tempo
+    find = clock(); 
+
+    //Informa que acabou o processo
+    cout << "saiu os processos" << endl;
+
+    //Fecha as sessões crítica
+    if (SecCrtSoma != 0)
+        CloseHandle(SecCrtSoma);
+    if (SecCrtRetirada != 0)
+        CloseHandle(SecCrtRetirada);
+    
+    //Conta o numero de submatriz processada
+    int sun_matrix_process = 0;
+    cout << "Informações apos o termino do processamento:" << endl;
+
+    //Informa qunato cada indice processou
+    for (int i = 0; i < num_threads; i++) {
+        cout << "Processador de identidade [" << vParam[i].id << "]" << "processou: " << vParam[i].count << endl;
+        sun_matrix_process += vParam[i].count;
+    }
+
+    //Mostra quantas foram processadas
+    cout << sun_matrix_process << endl;
+
+    //Retorna o clok to tempo
+    return find - init;
+
+}
+      """,
+            "descricao": "Essa é a parte que faz as threads e um pré preparamento depois que já temos as matrizes cheias.",
+        },
+    ],
+    "agregamento": """Foi um dos trabalhos mais desafiadores que fiz, depois do projeto de memória cache. Embora a parte relacionada às threads fosse relativamente simples, a subdivisão das matrizes foi, sem dúvida, um dos maiores desafios. Consegui demonstrar a inviabilidade de criar uma matriz de números primos, já que, por definição, um número primo é indivisível além de por um e por ele mesmo.""",
+    "Link": """https://github.com/MaykollRocha/Trabalhos_SO/tree/main""",
+    }
